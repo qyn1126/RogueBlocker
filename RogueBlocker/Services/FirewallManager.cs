@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RogueBlocker.Configuration;
@@ -20,7 +21,10 @@ public class FirewallManager
     public async Task InitializeAsync()
     {
         await LoadExistingBannedIpsAsync();
-        _logger.LogInformation("防火墙管理器初始化完成，已加载 {Count} 个已封禁IP", _bannedIps.Count);
+        _logger.LogInformation(
+            "防火墙管理器初始化完成，已加载 {Count} 个已封禁IP",
+            _bannedIps.Count
+        );
     }
 
     public bool IsIpBanned(string ip) => _bannedIps.Contains(ip);
@@ -44,7 +48,8 @@ public class FirewallManager
         var ruleName = $"{_options.FirewallRulePrefix}{ip.Replace(":", "_").Replace(".", "_")}";
 
         var result = await RunNetshCommandAsync(
-            $"advfirewall firewall add rule name=\"{ruleName}\" dir=in action=block remoteip={ip}");
+            $"advfirewall firewall add rule name=\"{ruleName}\" dir=in action=block remoteip={ip}"
+        );
 
         if (result)
         {
@@ -64,7 +69,8 @@ public class FirewallManager
         var ruleName = $"{_options.FirewallRulePrefix}{ip.Replace(":", "_").Replace(".", "_")}";
 
         var result = await RunNetshCommandAsync(
-            $"advfirewall firewall delete rule name=\"{ruleName}\"");
+            $"advfirewall firewall delete rule name=\"{ruleName}\""
+        );
 
         if (result)
         {
@@ -80,7 +86,8 @@ public class FirewallManager
         try
         {
             var output = await RunNetshCommandWithOutputAsync(
-                $"advfirewall firewall show rule name=all dir=in");
+                $"advfirewall firewall show rule name=all dir=in"
+            );
 
             if (string.IsNullOrEmpty(output))
                 return;
@@ -96,8 +103,10 @@ public class FirewallManager
                 {
                     currentRuleName = trimmed.Split(':', 2).LastOrDefault()?.Trim();
                 }
-                else if ((trimmed.StartsWith("RemoteIP:") || trimmed.StartsWith("远程 IP:"))
-                         && currentRuleName?.StartsWith(_options.FirewallRulePrefix) == true)
+                else if (
+                    (trimmed.StartsWith("RemoteIP:") || trimmed.StartsWith("远程 IP:"))
+                    && currentRuleName?.StartsWith(_options.FirewallRulePrefix) == true
+                )
                 {
                     var ip = trimmed.Split(':', 2).LastOrDefault()?.Trim();
                     if (!string.IsNullOrEmpty(ip) && ip != "Any")
@@ -126,8 +135,8 @@ public class FirewallManager
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
+                    CreateNoWindow = true,
+                },
             };
 
             process.Start();
@@ -155,8 +164,10 @@ public class FirewallManager
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.Default, // 关键
+                    StandardErrorEncoding = Encoding.Default, // 可选
+                },
             };
 
             process.Start();

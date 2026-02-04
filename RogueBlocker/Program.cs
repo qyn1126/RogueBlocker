@@ -3,12 +3,14 @@ using Microsoft.Extensions.Hosting;
 using RogueBlocker.Configuration;
 using RogueBlocker.Services;
 using Serilog;
+using System.Text;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 // 配置日志目录
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 Console.WriteLine(logDirectory);
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 // 配置 Serilog
 Log.Logger = new LoggerConfiguration()
